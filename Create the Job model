@@ -1,0 +1,86 @@
+Day 4: Create the Job model
+Create backend/src/models/Job.js:
+const mongoose = require("mongoose");
+
+const jobSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    department: String,
+    location: String,
+    description: {
+      type: String,
+      required: true
+    },
+    requiredSkills: {
+      type: [String],
+      default: []
+    },
+    experienceRequired: {
+      type: Number,
+      default: 0
+    },
+    status: {
+      type: String,
+      enum: ["Open", "Closed"],
+      default: "Open"
+    }
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Job", jobSchema);
+
+
+This stores the job title, description, required skills, experience, and opening status.
+Day 5: Build the job APIs
+Create backend/src/routes/jobs.js:
+const express = require("express");
+const Job = require("../models/Job");
+
+const router = express.Router();
+
+// Get all jobs
+router.get("/", async (req, res) => {
+  try {
+    const jobs = await Job.find().sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create a job
+router.post("/", async (req, res) => {
+  try {
+    const job = await Job.create(req.body);
+    res.status(201).json(job);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Get one job
+router.get("/:id", async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    res.json(job);
+  } catch (error) {
+    res.status(400).json({ message: "Invalid job ID" });
+  }
+});
+
+module.exports = router;
+
+
+Register the router in server.js:
+const jobRoutes = require("./routes/jobs");
+app.use("/api/jobs", jobRoutes);
